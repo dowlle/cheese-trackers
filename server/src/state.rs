@@ -14,6 +14,7 @@ use axum::http::HeaderValue;
 use chrono::{DateTime, TimeDelta, Utc};
 use futures::TryStreamExt;
 use jsonwebtoken::Header;
+use serde::{Deserialize, Deserializer, de::Visitor};
 use tokio::time::timeout;
 use url::Url;
 use uuid::Uuid;
@@ -134,6 +135,38 @@ impl<K> moka::policy::Expiry<K, AutoUpstreamTrackerStatus> for AutoUpstreamTrack
 
             AutoUpstreamTrackerStatus::TransientFailure => Duration::from_mins(1),
         })
+    }
+}
+
+// Deserializes enforcing the same structure as a HashMap<String, String> but
+// discards all data.
+struct DatapackageChecksumIgnoreResponse;
+
+impl<'de> Deserialize<'de> for DatapackageChecksumIgnoreResponse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DatapackageChecksumIgnoreResponseVisitor;
+
+        impl<'de> Visitor<'de> for DatapackageChecksumIgnoreResponseVisitor {
+            type Value = DatapackageChecksumIgnoreResponse;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(formatter, "a map from string keys to string values")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                while map.next_entry::<String, String>()?.is_some() {}
+
+                Ok(DatapackageChecksumIgnoreResponse)
+            }
+        }
+
+        deserializer.deserialize_map(DatapackageChecksumIgnoreResponseVisitor)
     }
 }
 
@@ -259,7 +292,7 @@ impl<D> AppState<D> {
 
                     let r = resp
                         .error_for_status()?
-                        .json::<HashMap<String, String>>()
+                        .json::<DatapackageChecksumIgnoreResponse>()
                         .await;
 
                     // Inspect the results because, like for the status, some kinds
