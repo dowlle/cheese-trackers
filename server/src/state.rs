@@ -14,6 +14,7 @@ use axum::http::HeaderValue;
 use chrono::{DateTime, TimeDelta, Utc};
 use futures::TryStreamExt;
 use jsonwebtoken::Header;
+use tokio::time::timeout;
 use url::Url;
 use uuid::Uuid;
 
@@ -110,6 +111,32 @@ static GIT_COMMIT_ID: LazyLock<String> = LazyLock::new(|| {
         .unwrap_or_else(|| "dev".to_owned())
 });
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AutoUpstreamTrackerStatus {
+    Valid,
+    Invalid,
+    TransientFailure,
+}
+
+struct AutoUpstreamTrackerStatusExpiry;
+
+impl<K> moka::policy::Expiry<K, AutoUpstreamTrackerStatus> for AutoUpstreamTrackerStatusExpiry {
+    fn expire_after_create(
+        &self,
+        _key: &K,
+        value: &AutoUpstreamTrackerStatus,
+        _created_at: std::time::Instant,
+    ) -> Option<Duration> {
+        Some(match value {
+            AutoUpstreamTrackerStatus::Valid | AutoUpstreamTrackerStatus::Invalid => {
+                Duration::from_hours(1)
+            }
+
+            AutoUpstreamTrackerStatus::TransientFailure => Duration::from_mins(1),
+        })
+    }
+}
+
 /// Global server state.
 pub struct AppState<D> {
     /// The server's [data access provider](crate::db::DataAccessProvider).
@@ -127,7 +154,7 @@ pub struct AppState<D> {
     upstream_trackers: HashMap<Url, String>,
 
     /// Automatically-detected upstream trackers, if enabled by config.
-    auto_upstream_trackers: Option<moka::future::Cache<Url, bool>>,
+    auto_upstream_trackers: Option<moka::future::Cache<Url, AutoUpstreamTrackerStatus>>,
 
     /// Client used for upstream tracker updates.
     reqwest_client: reqwest::Client,
@@ -156,7 +183,7 @@ impl<D> AppState<D> {
                 .collect(),
             auto_upstream_trackers: config.auto_upstream_trackers.then(|| {
                 moka::future::Cache::builder()
-                    .time_to_live(Duration::from_hours(1))
+                    .expire_after(AutoUpstreamTrackerStatusExpiry)
                     .build()
             }),
             ui_settings_header: serde_json::to_string(&UiSettings {
@@ -219,38 +246,53 @@ impl<D> AppState<D> {
         // server.  We also validate that the response is a JSON map to strings.
         let datapackage_endpoint = prefix.join("api/datapackage_checksum").ok()?;
 
-        auto_upstreams
-            .try_get_with(prefix.clone(), async {
-                let resp = self.reqwest_client.get(datapackage_endpoint).send().await?;
+        let status = auto_upstreams
+            .get_with(prefix.clone(), async {
+                let fut = async {
+                    let resp = self.reqwest_client.get(datapackage_endpoint).send().await?;
 
-                // Check for client errors before error_for_status() because a
-                // client error should result in a *cached* negative.
-                if resp.status().is_client_error() {
-                    return Ok(false);
-                }
-
-                let r = resp
-                    .error_for_status()?
-                    .json::<HashMap<String, String>>()
-                    .await;
-
-                // Inspect the results because, like for the status, some kinds
-                // of errors should be a cached negative.
-                match r {
-                    Ok(_) => {
-                        log!("Auto-whitelisted prefix {prefix}");
-                        Ok(true)
+                    // Check for client errors before error_for_status() because a
+                    // client error should result in a *cached* negative.
+                    if resp.status().is_client_error() {
+                        return Ok(false);
                     }
-                    Err(e) if e.is_decode() => Ok(false),
-                    Err(e) => Err(e),
-                }
+
+                    let r = resp
+                        .error_for_status()?
+                        .json::<HashMap<String, String>>()
+                        .await;
+
+                    // Inspect the results because, like for the status, some kinds
+                    // of errors should be a cached negative.
+                    match r {
+                        Ok(_) => {
+                            log!("Auto-whitelisted prefix {prefix}");
+                            Ok(true)
+                        }
+                        Err(e) if e.is_decode() => Ok(false),
+                        Err(e) => Err(e),
+                    }
+                };
+
+                let err: Box<dyn std::error::Error> =
+                    match timeout(Duration::from_secs(15), fut).await {
+                        Ok(Ok(true)) => return AutoUpstreamTrackerStatus::Valid,
+                        Ok(Ok(false)) => return AutoUpstreamTrackerStatus::Invalid,
+
+                        Ok(Err(e)) => e.into(),
+                        Err(e) => e.into(),
+                    };
+
+                log!("Error checking if {room_link} is an AP server: {err}");
+
+                AutoUpstreamTrackerStatus::TransientFailure
             })
-            .await
-            .unwrap_or_else(|e| {
-                log!("Error checking if {room_link} is an AP server: {e}");
-                false
-            })
-            .then(|| host.into())
+            .await;
+
+        match status {
+            AutoUpstreamTrackerStatus::Valid => Some(host.into()),
+            _ => None,
+        }
     }
 
     /// Synchronize a tracker in the database with fetched state from
