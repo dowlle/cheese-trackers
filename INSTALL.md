@@ -6,12 +6,11 @@ method of deployment is Docker.  Images are published to the
 Hub](https://hub.docker.com/r/cdhowie/cheese-trackers).
 
 Note that everyone is welcome to use [the canonical
-instance](https://cheesetrackers.theincrediblewheelofchee.se)!  If you are
-considering hosting your own instance only because you use an alternative
-Archipelago server that does not seem to work with it, this is because tracker
-URL prefixes need to be explicitly allowed for security reasons.  Consider
-contacting @theincrediblewheelofcheese on Discord to have your Archipelago
-instance's tracker prefix added to the list of allowed trackers.
+instance](https://cheesetrackers.theincrediblewheelofchee.se), which will work
+with any AP-compatible webhost!  (If your server uses a different hostname for
+the AP webhost and AP rooms, and you'd like the room connection information shown
+to be accurate, feel free to contact @theincrediblewheelofcheese on Discord and
+this can be configured.)
 
 ## Quick Start
 
@@ -129,6 +128,22 @@ upstream_trackers:
   - 'https://archipelago.gg/tracker'
   - url_prefix: 'https://example.com/tracker'
     ap_host: 'example.org'
+
+# Auto-detect and whitelist AP servers.
+#
+# If this is enabled and an API call is made to fetch a tracker URL that meets
+# all of these requirements:
+#
+# * Is an HTTP or HTTPS URL.
+# * URI starts with "/tracker/" and is followed by one path component.
+#
+# Then the service will attempt to fetch a known, AP-specific API endpoint.
+# If the request is successful and the response matches the expected schema,
+# the server will be considered whitelisted.
+#
+# The results of this detection will be cached for one hour.  (Transient
+# errors will not be cached.)
+auto_upstream_trackers: false
 
 # List of banners to show at the top of the UI.  This is a list of objects.
 #

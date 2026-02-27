@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use chrono::{DateTime, Utc};
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use serde::Serialize;
 
 use crate::{
@@ -48,8 +48,11 @@ where
     }
 
     impl DashboardTracker {
-        fn new<T>(tracker: ApTrackerDashboard, state: &AppState<T>) -> Self {
-            Self {
+        async fn new<T>(
+            tracker: ApTrackerDashboard,
+            state: &AppState<T>,
+        ) -> Result<Self, url::ParseError> {
+            Ok(Self {
                 id: tracker.id,
                 tracker_id: tracker.tracker_id.into(),
                 title: tracker.title,
@@ -59,14 +62,15 @@ where
                 dashboard_override_visibility: tracker.dashboard_override_visibility,
                 room_link: tracker.room_link,
                 room_host: state
-                    .get_upstream_host_for_tracker_link(&tracker.upstream_url)
-                    .map(str::to_owned),
+                    .get_upstream_host_for_tracker_link(&tracker.upstream_url.parse()?)
+                    .await
+                    .map(|s| s.into_owned()),
                 last_port: tracker.last_port,
                 // TODO: This check is not completely accurate; it will falsely
                 // report a port as not stale if the port was checked recently,
                 // but the room is not active.
                 last_port_is_stale: tracker.next_port_check_at.map(|d| d < Utc::now()),
-            }
+            })
         }
     }
 
@@ -78,9 +82,9 @@ where
 
     Ok(Json(
         db.get_dashboard_trackers(user.user.id)
-            .map_ok(|t| DashboardTracker::new(t, &state))
+            .map(|r| r.unexpected())
+            .and_then(|t| async { DashboardTracker::new(t, &state).await.unexpected() })
             .try_collect::<Vec<DashboardTracker>>()
-            .await
-            .unexpected()?,
+            .await?,
     ))
 }

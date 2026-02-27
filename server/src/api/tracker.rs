@@ -169,8 +169,8 @@ where
     }
 
     impl Tracker {
-        fn new<T>(tracker: ApTracker, state: &AppState<T>) -> Self {
-            Self {
+        async fn new<T>(tracker: ApTracker, state: &AppState<T>) -> Result<Self, url::ParseError> {
+            Ok(Self {
                 id: tracker.id,
                 tracker_id: tracker.tracker_id.into(),
                 updated_at: tracker.updated_at,
@@ -179,8 +179,9 @@ where
                 owner_ct_user_id: tracker.owner_ct_user_id,
                 lock_settings: tracker.lock_settings,
                 room_host: state
-                    .get_upstream_host_for_tracker_link(&tracker.upstream_url)
-                    .map(str::to_owned),
+                    .get_upstream_host_for_tracker_link(&tracker.upstream_url.parse()?)
+                    .await
+                    .map(|s| s.into_owned()),
                 upstream_url: tracker.upstream_url,
                 global_ping_policy: tracker.global_ping_policy,
                 room_link: tracker.room_link,
@@ -188,7 +189,7 @@ where
                 inactivity_threshold_yellow_hours: tracker.inactivity_threshold_yellow_hours,
                 inactivity_threshold_red_hours: tracker.inactivity_threshold_red_hours,
                 require_authentication_to_claim: tracker.require_authentication_to_claim,
-            }
+            })
         }
     }
 
@@ -287,7 +288,7 @@ where
     drop(db);
 
     Ok(Json(GetTrackerResponse {
-        tracker: Tracker::new(tracker, &state),
+        tracker: Tracker::new(tracker, &state).await.unexpected()?,
         owner_discord_username,
         games,
         hints,

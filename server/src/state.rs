@@ -1,10 +1,12 @@
 //! Server state management.
 
 use std::{
+    borrow::Cow,
     collections::HashMap,
     future::ready,
     str::FromStr,
     sync::{Arc, LazyLock},
+    time::Duration,
 };
 
 use arrayvec::ArrayVec;
@@ -18,7 +20,7 @@ use uuid::Uuid;
 use crate::{
     api::{UiSettings, tracker::UrlEncodedTrackerId},
     auth::{discord::AuthClient, token::TokenProcessor},
-    conf::{self, Config},
+    conf::Config,
     db::{
         DataAccess, DataAccessProvider, Transactable, Transaction, create_audit_for,
         model::{
@@ -121,8 +123,11 @@ pub struct AppState<D> {
     /// Authentication token processor.
     pub token_processor: TokenProcessor,
 
-    /// List of valid upstream trackers.
-    upstream_trackers: Vec<conf::UpstreamTracker>,
+    /// Valid upstream trackers; maps URL prefix to AP hostname.
+    upstream_trackers: HashMap<Url, String>,
+
+    /// Automatically-detected upstream trackers, if enabled by config.
+    auto_upstream_trackers: Option<moka::future::Cache<Url, bool>>,
 
     /// Client used for upstream tracker updates.
     reqwest_client: reqwest::Client,
@@ -144,7 +149,16 @@ impl<D> AppState<D> {
         Self {
             reqwest_client: reqwest::Client::builder().build().unwrap(),
             data_provider,
-            upstream_trackers: config.upstream_trackers,
+            upstream_trackers: config
+                .upstream_trackers
+                .into_iter()
+                .map(|upstream| (upstream.url_prefix, upstream.ap_host))
+                .collect(),
+            auto_upstream_trackers: config.auto_upstream_trackers.then(|| {
+                moka::future::Cache::builder()
+                    .time_to_live(Duration::from_hours(1))
+                    .build()
+            }),
             ui_settings_header: serde_json::to_string(&UiSettings {
                 banners: config.banners,
                 hoster: config.hoster,
@@ -172,26 +186,71 @@ impl<D> AppState<D> {
         }
     }
 
-    pub fn get_upstream_tracker(
+    pub async fn get_upstream_host_for_tracker_link(
         &self,
-        url: impl TryInto<Url>,
-    ) -> Option<&crate::conf::UpstreamTracker> {
-        let mut url = url.try_into().ok()?;
-        match url.path_segments_mut() {
+        room_link: &Url,
+    ) -> Option<Cow<'_, str>> {
+        let mut prefix = room_link.clone();
+        match prefix.path_segments_mut() {
             Ok(mut s) => s.pop(),
             Err(_) => return None,
         };
 
-        self.upstream_trackers.iter().find(|t| t.url_prefix == url)
-    }
-
-    pub fn get_upstream_host_for_tracker_link<'a>(&'a self, room_link: &str) -> Option<&'a str> {
-        match room_link.is_empty() {
-            true => None,
-            false => self
-                .get_upstream_tracker(room_link)
-                .map(|h| h.ap_host.as_str()),
+        // Check if we have a configured tracker with this prefix.
+        if let Some(host) = self.upstream_trackers.get(&prefix) {
+            return Some(host.into());
         }
+
+        // Otherwise, if automatic upstream trackers are enabled, check if the
+        // URL points to an AP instance.
+        let auto_upstreams = self.auto_upstream_trackers.as_ref()?;
+
+        // With auto-detection we only accept "/tracker/..." and HTTP/HTTPS.
+        if (prefix.scheme() != "http" && prefix.scheme() != "https") || prefix.path() != "/tracker"
+        {
+            return None;
+        }
+
+        // We will extract the host from the provided link, but if there isn't a
+        // host (unlikely) then we can fail early.
+        let host = prefix.host()?.to_string();
+
+        // Use the datapackage_checksum endpoint to check if the server is an AP
+        // server.  We also validate that the response is a JSON map to strings.
+        let datapackage_endpoint = prefix.join("api/datapackage_checksum").ok()?;
+
+        auto_upstreams
+            .try_get_with(prefix.clone(), async {
+                let resp = self.reqwest_client.get(datapackage_endpoint).send().await?;
+
+                // Check for client errors before error_for_status() because a
+                // client error should result in a *cached* negative.
+                if resp.status().is_client_error() {
+                    return Ok(false);
+                }
+
+                let r = resp
+                    .error_for_status()?
+                    .json::<HashMap<String, String>>()
+                    .await;
+
+                // Inspect the results because, like for the status, some kinds
+                // of errors should be a cached negative.
+                match r {
+                    Ok(_) => {
+                        log!("Auto-whitelisted prefix {prefix}");
+                        Ok(true)
+                    }
+                    Err(e) if e.is_decode() => Ok(false),
+                    Err(e) => Err(e),
+                }
+            })
+            .await
+            .unwrap_or_else(|e| {
+                log!("Error checking if {room_link} is an AP server: {e}");
+                false
+            })
+            .then(|| host.into())
     }
 
     /// Synchronize a tracker in the database with fetched state from
@@ -546,7 +605,11 @@ impl<D> AppState<D> {
             .parse()
             .map_err(|e| Arc::new(TrackerUrlParseError::Url(e).into()))?;
 
-        if self.get_upstream_tracker(url.clone()).is_none() {
+        if self
+            .get_upstream_host_for_tracker_link(&url)
+            .await
+            .is_none()
+        {
             return Err(Arc::new(TrackerUpdateError::UpstreamNotWhitelisted));
         }
 

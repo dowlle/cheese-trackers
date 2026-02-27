@@ -33,6 +33,16 @@ pub struct Config {
     #[serde(deserialize_with = "deser_upstream_trackers")]
     pub upstream_trackers: Vec<UpstreamTracker>,
 
+    /// Whether to allow other upstream trackers if they can be identified as an
+    /// Archipelago server.
+    ///
+    /// If set to true, and a URL not in the `upstream_trackers` list is
+    /// attempted, the web service will check well-known Archipelago API
+    /// endpoints on the target server first to ensure it is an Archipelago host
+    /// before allowing it.
+    #[serde(default)]
+    pub auto_upstream_trackers: bool,
+
     /// The minimum allowed time between consecutive updates of a single tracker
     /// from the upstream tracker source.
     #[serde(rename = "tracker_update_interval_mins")]
