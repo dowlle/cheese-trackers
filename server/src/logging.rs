@@ -5,8 +5,8 @@ use std::{backtrace::Backtrace, fmt::Display};
 use axum::http::StatusCode;
 
 macro_rules! log {
-    ( $e:tt ) => {
-        println!("{} - {}", ::chrono::Utc::now(), format_args!($e))
+    ( $( $e:tt )* ) => {
+        println!("{} - {}", ::chrono::Utc::now(), format_args!($($e)*))
     };
 }
 

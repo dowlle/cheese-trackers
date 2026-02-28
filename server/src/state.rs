@@ -774,7 +774,7 @@ impl<D> AppState<D> {
                 Ok(None) => {}
 
                 Err(e) => {
-                    eprintln!(
+                    log!(
                         "During tracker refresh request, failed to fetch room info for tracker {url:?}: {e}"
                     );
                 }
@@ -816,10 +816,7 @@ impl<D> AppState<D> {
         let room_id = extract_room_id_from_room_link(&room_url, &tracker_url)
             .ok_or(GetRoomLinkError::InvalidRoomLink)?;
 
-        println!(
-            "{} - Requesting port from room {room_url} for tracker {tracker_url}",
-            Utc::now()
-        );
+        log!("Requesting port from room {room_url} for tracker {tracker_url}");
 
         // Set the tracker URL's path to the API base and clear out other stuff
         // we don't want.  It doesn't matter whether we use the tracker or the

@@ -16,6 +16,8 @@ use tower_http::{
 };
 use tower_layer::Layer;
 
+use crate::logging::log;
+
 mod ap_api;
 mod api;
 mod auth;
@@ -40,7 +42,7 @@ async fn create_router_from_config(
         conf::Database::Postgres { connection_string } => {
             let data_provider = sqlx::PgPool::connect(connection_string).await?;
             data_provider.migrate().await?;
-            println!("Migrations completed successfully.");
+            log!("Migrations completed successfully.");
             api::create_router(Arc::new(AppState::new(config, data_provider)))
                 .layer(client_ip_source.into_extension())
         }
@@ -100,7 +102,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match signal::any([SignalKind::interrupt(), SignalKind::terminate()]) {
             Ok(f) => f.await,
             Err(e) => {
-                eprintln!("Unable to listen for shutdown signals: {e}");
+                log!("Unable to listen for shutdown signals: {e}");
                 std::future::pending().await
             }
         }

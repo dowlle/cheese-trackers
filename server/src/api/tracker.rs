@@ -26,7 +26,7 @@ use crate::{
             PingPreference, ProgressionStatus, UpdateCompletionStatus,
         },
     },
-    logging::UnexpectedResultExt,
+    logging::{UnexpectedResultExt, log},
     send_hack::{send_future, send_stream},
     state::{AppState, GetRoomLinkError, TrackerUpdateError},
 };
@@ -219,7 +219,7 @@ where
     if let Err(err) = state.upsert_tracker(&upstream_url).await {
         // Log this error but do not fail the overall operation; if we have old
         // data in the database then we can still use it.
-        println!("Failed to update tracker {tracker_id}: {err}");
+        log!("Failed to update tracker {tracker_id}: {err}");
 
         // ... unless the upstream isn't whitelisted.
         if matches!(&*err, &TrackerUpdateError::UpstreamNotWhitelisted) {
@@ -252,9 +252,10 @@ where
                     .ok_or_else(|| {
                         // This should not be possible due to the foreign key
                         // constraint, and we are running in a transaction.
-                        eprintln!(
+                        log!(
                             "Owner of tracker {} user ID {} doesn't exist",
-                            tracker.id, uid
+                            tracker.id,
+                            uid,
                         );
                         StatusCode::INTERNAL_SERVER_ERROR
                     })?
@@ -320,7 +321,7 @@ where
             return Err(StatusCode::FORBIDDEN);
         }
         Err(e) => {
-            println!("Failed to fetch tracker from {}: {e}", body.url);
+            log!("Failed to fetch tracker from {}: {e}", body.url);
 
             // We couldn't get/update the tracker but maybe we have data we've
             // fetched before.
@@ -500,9 +501,10 @@ where
                     }
 
                     Err(e) => {
-                        eprintln!(
+                        log!(
                             "During tracker update request, failed to fetch room info for {:?} for tracker {:?}: {e}",
-                            tracker.room_link, tracker.upstream_url
+                            tracker.room_link,
+                            tracker.upstream_url,
                         );
 
                         (None, Utc::now().checked_add_signed(TimeDelta::minutes(5)))
