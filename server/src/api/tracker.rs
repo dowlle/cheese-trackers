@@ -349,7 +349,8 @@ where
                         | GameCountMismatch { .. }
                         | GameInformationMismatch(_)
                         | NumericConversion(_)
-                        | HintGameMissing(_) => StatusCode::INTERNAL_SERVER_ERROR,
+                        | HintGameMissing(_)
+                        | Timeout(_) => StatusCode::INTERNAL_SERVER_ERROR,
                     }
                 })?
                 .tracker_id

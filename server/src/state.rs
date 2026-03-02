@@ -15,7 +15,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use futures::TryStreamExt;
 use jsonwebtoken::Header;
 use serde::{Deserialize, Deserializer, de::Visitor};
-use tokio::time::timeout;
+use tokio::time::{error::Elapsed, timeout};
 use url::Url;
 use uuid::Uuid;
 
@@ -103,6 +103,8 @@ pub enum TrackerUpdateError {
     /// The upstream tracker does not exist.
     #[error("tracker not found")]
     TrackerNotFound,
+    #[error("operation timed out")]
+    Timeout(#[from] Elapsed),
 }
 
 static GIT_COMMIT_ID: LazyLock<String> = LazyLock::new(|| {
@@ -722,18 +724,24 @@ impl<D> AppState<D> {
             log!("Requesting AP tracker {url}");
 
             let sync_tracker_fut = async {
-                let html = self
-                    .reqwest_client
-                    .get(url.clone())
-                    .send()
-                    .await?
-                    .error_for_status()
-                    .map_err(|e| match e.status() {
-                        Some(reqwest::StatusCode::NOT_FOUND) => TrackerUpdateError::TrackerNotFound,
-                        _ => TrackerUpdateError::Http(e),
-                    })?
-                    .text()
-                    .await?;
+                let html = timeout(Duration::from_secs(30), async {
+                    Ok::<_, TrackerUpdateError>(
+                        self.reqwest_client
+                            .get(url.clone())
+                            .send()
+                            .await?
+                            .error_for_status()
+                            .map_err(|e| match e.status() {
+                                Some(reqwest::StatusCode::NOT_FOUND) => {
+                                    TrackerUpdateError::TrackerNotFound
+                                }
+                                _ => TrackerUpdateError::Http(e),
+                            })?
+                            .text()
+                            .await?,
+                    )
+                })
+                .await??;
 
                 let (games, hints) = parse_tracker_html(&html)?;
 
@@ -830,7 +838,7 @@ impl<D> AppState<D> {
         let client =
             crate::ap_api::Client::new_with_client(tracker_url, self.reqwest_client.clone());
 
-        let r = client.get_room_status(room_id).await?;
+        let r = timeout(Duration::from_secs(30), client.get_room_status(room_id)).await??;
 
         // Set the next time to check either when the room times out, or 5
         // minutes from now, whichever is later.
@@ -888,4 +896,6 @@ pub enum GetRoomLinkError {
     ),
     #[error("a DateTime was out of range")]
     DateTimeOutOfRange,
+    #[error("operation timed out")]
+    Timeout(#[from] Elapsed),
 }
