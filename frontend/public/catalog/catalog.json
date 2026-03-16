@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "games": {
+    "Satisfactory": "satisfactory.json",
+    "Stardew Valley": "stardew_valley.json"
+  }
+}

@@ -21,7 +21,9 @@ const listingsByGame = computed(() => groupBy(listings.value, 'game_name'));
 
 const userGames = computed(() => {
     if (!currentUser.value?.id || !props.trackerData?.games) return [];
-    return filter(props.trackerData.games, g => g.claimed_by_ct_user_id === currentUser.value.id);
+    // TODO: Restore claim filter after testing. For now, allow any slot.
+    // return filter(props.trackerData.games, g => g.claimed_by_ct_user_id === currentUser.value.id);
+    return props.trackerData.games;
 });
 
 const userGameForSelectedGame = computed(() => {

@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { filter, orderBy } from 'lodash-es';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
+import { filter, orderBy, flatMap } from 'lodash-es';
+import axios from 'axios';
 
 import { marketListingType, marketListingStatus } from '@/types';
 import UsernameDisplay from '@/components/UsernameDisplay.vue';
@@ -12,6 +13,121 @@ const emit = defineEmits(['create', 'update', 'delete']);
 const newItemName = ref('');
 const newListingType = ref('request');
 const newQuantity = ref(1);
+
+// Catalog data
+const catalogCategories = ref([]);
+const catalogLoading = ref(false);
+const showDropdown = ref(false);
+const searchQuery = ref('');
+const highlightIndex = ref(-1);
+const itemInputRef = ref(null);
+const dropdownRef = ref(null);
+
+// Game name to catalog filename mapping
+const CATALOG_GAMES = {
+    'Satisfactory': 'satisfactory.json',
+    'Stardew Valley': 'stardew_valley.json',
+};
+
+async function loadCatalog() {
+    const filename = CATALOG_GAMES[props.game];
+    if (!filename) return;
+
+    catalogLoading.value = true;
+    try {
+        const { data } = await axios.get(`/catalog/games/${filename}`);
+        catalogCategories.value = data.categories || [];
+    } catch (e) {
+        console.log('Could not load item catalog for', props.game, e);
+        catalogCategories.value = [];
+    } finally {
+        catalogLoading.value = false;
+    }
+}
+
+// All items flattened with category info
+const allItems = computed(() =>
+    flatMap(catalogCategories.value, cat =>
+        cat.items.map(item => ({ ...item, category: cat.name }))
+    )
+);
+
+// Filtered items based on search
+const filteredItems = computed(() => {
+    const q = searchQuery.value.toLowerCase().trim();
+    if (!q) return allItems.value;
+    return filter(allItems.value, item =>
+        item.name.toLowerCase().includes(q)
+    );
+});
+
+// Group filtered items by category for display
+const filteredByCategory = computed(() => {
+    const groups = [];
+    let currentCat = null;
+    for (const item of filteredItems.value) {
+        if (item.category !== currentCat) {
+            currentCat = item.category;
+            groups.push({ name: currentCat, items: [] });
+        }
+        groups[groups.length - 1].items.push(item);
+    }
+    return groups;
+});
+
+function selectItem(item) {
+    newItemName.value = item.name;
+    searchQuery.value = '';
+    showDropdown.value = false;
+    highlightIndex.value = -1;
+}
+
+function onInputFocus() {
+    searchQuery.value = '';
+    showDropdown.value = true;
+    highlightIndex.value = -1;
+}
+
+function onInputBlur() {
+    // Delay to allow click on dropdown item
+    setTimeout(() => {
+        showDropdown.value = false;
+    }, 200);
+}
+
+function onInputChange(e) {
+    searchQuery.value = e.target.value;
+    newItemName.value = e.target.value;
+    showDropdown.value = true;
+    highlightIndex.value = -1;
+}
+
+function onKeydown(e) {
+    if (!showDropdown.value) return;
+
+    const items = filteredItems.value;
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightIndex.value = Math.min(highlightIndex.value + 1, items.length - 1);
+        scrollToHighlighted();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightIndex.value = Math.max(highlightIndex.value - 1, 0);
+        scrollToHighlighted();
+    } else if (e.key === 'Enter' && highlightIndex.value >= 0 && highlightIndex.value < items.length) {
+        e.preventDefault();
+        selectItem(items[highlightIndex.value]);
+    } else if (e.key === 'Escape') {
+        showDropdown.value = false;
+    }
+}
+
+function scrollToHighlighted() {
+    nextTick(() => {
+        const el = dropdownRef.value?.querySelector('.dropdown-item.active');
+        if (el) el.scrollIntoView({ block: 'nearest' });
+    });
+}
 
 const activeOffers = computed(() =>
     orderBy(
@@ -31,10 +147,8 @@ const fulfilledListings = computed(() =>
     filter(props.listings, l => l.status !== 'active')
 );
 
-// Check if an item has a match (offer matches a request from another user)
 function hasMatch(listing) {
     if (!props.currentUserId) return false;
-
     if (listing.listing_type === 'request' && listing.ct_user_id === props.currentUserId) {
         return activeOffers.value.some(o =>
             o.item_name === listing.item_name && o.ct_user_id !== props.currentUserId
@@ -59,8 +173,21 @@ function submitListing() {
     });
 
     newItemName.value = '';
+    searchQuery.value = '';
     newQuantity.value = 1;
 }
+
+// Track flat index for keyboard nav
+function flatIndex(catIdx, itemIdx) {
+    let idx = 0;
+    for (let c = 0; c < catIdx; c++) {
+        idx += filteredByCategory.value[c].items.length;
+    }
+    return idx + itemIdx;
+}
+
+onMounted(loadCatalog);
+watch(() => props.game, loadCatalog);
 </script>
 
 <template>
@@ -78,14 +205,41 @@ function submitListing() {
                             </option>
                         </select>
                     </div>
-                    <div class="col">
+                    <div class="col position-relative">
                         <label class="form-label small">Item</label>
                         <input
+                            ref="itemInputRef"
                             class="form-control form-control-sm"
-                            v-model="newItemName"
-                            placeholder="Item name"
-                            list="market-items"
+                            :value="newItemName"
+                            @input="onInputChange"
+                            @focus="onInputFocus"
+                            @blur="onInputBlur"
+                            @keydown="onKeydown"
+                            placeholder="Search items..."
+                            autocomplete="off"
                         >
+                        <div
+                            v-if="showDropdown && (filteredItems.length > 0 || catalogLoading)"
+                            ref="dropdownRef"
+                            class="dropdown-menu show w-100 item-dropdown"
+                        >
+                            <div v-if="catalogLoading" class="dropdown-item text-muted">Loading catalog...</div>
+                            <template v-else>
+                                <template v-for="(cat, catIdx) in filteredByCategory" :key="cat.name">
+                                    <h6 class="dropdown-header">{{ cat.name }}</h6>
+                                    <button
+                                        v-for="(item, itemIdx) in cat.items"
+                                        :key="item.name"
+                                        type="button"
+                                        class="dropdown-item"
+                                        :class="{ active: highlightIndex === flatIndex(catIdx, itemIdx) }"
+                                        @mousedown.prevent="selectItem(item)"
+                                    >
+                                        {{ item.name }}
+                                    </button>
+                                </template>
+                            </template>
+                        </div>
                     </div>
                     <div class="col-auto" style="width: 80px">
                         <label class="form-label small">Qty</label>
@@ -125,7 +279,7 @@ function submitListing() {
                                 <span v-if="listing.quantity > 1" class="text-muted ms-1">x{{ listing.quantity }}</span>
                                 <br>
                                 <small class="text-muted">
-                                    by <UsernameDisplay :user="getUserForListing(listing)" size="sm"/>
+                                    by <UsernameDisplay :user="getUserForListing(listing)"/>
                                 </small>
                             </div>
                             <div v-if="listing.ct_user_id === currentUserId" class="btn-group btn-group-sm">
@@ -170,7 +324,7 @@ function submitListing() {
                                 </span>
                                 <br>
                                 <small class="text-muted">
-                                    by <UsernameDisplay :user="getUserForListing(listing)" size="sm"/>
+                                    by <UsernameDisplay :user="getUserForListing(listing)"/>
                                 </small>
                             </div>
                             <div v-if="listing.ct_user_id === currentUserId" class="btn-group btn-group-sm">
@@ -218,3 +372,26 @@ function submitListing() {
         </details>
     </div>
 </template>
+
+<style scoped>
+.item-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1050;
+}
+.item-dropdown .dropdown-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #adb5bd;
+    padding: 0.25rem 1rem;
+    margin-top: 0.25rem;
+}
+.item-dropdown .dropdown-item {
+    font-size: 0.85rem;
+    padding: 0.25rem 1rem;
+}
+.item-dropdown .dropdown-item.active {
+    background-color: var(--bs-primary);
+}
+</style>

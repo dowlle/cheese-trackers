@@ -1,0 +1,275 @@
+{
+  "game": "Satisfactory",
+  "categories": [
+    {
+      "name": "Ores",
+      "items": [
+        { "name": "Limestone", "icon": "limestone" },
+        { "name": "Iron Ore", "icon": "iron_ore" },
+        { "name": "Copper Ore", "icon": "copper_ore" },
+        { "name": "Caterium Ore", "icon": "caterium_ore" },
+        { "name": "Coal", "icon": "coal" },
+        { "name": "Raw Quartz", "icon": "raw_quartz" },
+        { "name": "Sulfur", "icon": "sulfur" },
+        { "name": "Bauxite", "icon": "bauxite" },
+        { "name": "SAM", "icon": "sam" },
+        { "name": "Uranium", "icon": "uranium" }
+      ]
+    },
+    {
+      "name": "Ingots",
+      "items": [
+        { "name": "Iron Ingot", "icon": "iron_ingot" },
+        { "name": "Copper Ingot", "icon": "copper_ingot" },
+        { "name": "Caterium Ingot", "icon": "caterium_ingot" },
+        { "name": "Steel Ingot", "icon": "steel_ingot" },
+        { "name": "Aluminum Ingot", "icon": "aluminum_ingot" },
+        { "name": "Ficsite Ingot", "icon": "ficsite_ingot" }
+      ]
+    },
+    {
+      "name": "Minerals",
+      "items": [
+        { "name": "Concrete", "icon": "concrete" },
+        { "name": "Quartz Crystal", "icon": "quartz_crystal" },
+        { "name": "Silica", "icon": "silica" },
+        { "name": "Copper Powder", "icon": "copper_powder" },
+        { "name": "Polymer Resin", "icon": "polymer_resin" },
+        { "name": "Petroleum Coke", "icon": "petroleum_coke" },
+        { "name": "Aluminum Scrap", "icon": "aluminum_scrap" }
+      ]
+    },
+    {
+      "name": "Aliens",
+      "items": [
+        { "name": "Alien Protein", "icon": "alien_protein" },
+        { "name": "Alien DNA Capsule", "icon": "alien_dna_capsule" }
+      ]
+    },
+    {
+      "name": "Liquids",
+      "items": [
+        { "name": "Water", "icon": "water" },
+        { "name": "Crude Oil", "icon": "crude_oil" },
+        { "name": "Heavy Oil Residue", "icon": "heavy_oil_residue" },
+        { "name": "Fuel", "icon": "fuel" },
+        { "name": "Liquid Biofuel", "icon": "liquid_biofuel" },
+        { "name": "Turbofuel", "icon": "turbofuel" },
+        { "name": "Alumina Solution", "icon": "alumina_solution" },
+        { "name": "Sulfuric Acid", "icon": "sulfuric_acid" },
+        { "name": "Nitric Acid", "icon": "nitric_acid" },
+        { "name": "Dissolved Silica", "icon": "dissolved_silica" }
+      ]
+    },
+    {
+      "name": "Gas",
+      "items": [
+        { "name": "Nitrogen Gas", "icon": "nitrogen_gas" },
+        { "name": "Rocket Fuel", "icon": "rocket_fuel" },
+        { "name": "Ionized Fuel", "icon": "ionized_fuel" },
+        { "name": "Dark Matter Residue", "icon": "dark_matter_residue" },
+        { "name": "Excited Photonic Matter", "icon": "excited_photonic_matter" }
+      ]
+    },
+    {
+      "name": "Standard Parts",
+      "items": [
+        { "name": "Iron Rod", "icon": "iron_rod" },
+        { "name": "Screws", "icon": "screws" },
+        { "name": "Iron Plate", "icon": "iron_plate" },
+        { "name": "Reinforced Iron Plate", "icon": "reinforced_iron_plate" },
+        { "name": "Copper Sheet", "icon": "copper_sheet" },
+        { "name": "Alclad Aluminum Sheet", "icon": "alclad_aluminum_sheet" },
+        { "name": "Aluminum Casing", "icon": "aluminum_casing" },
+        { "name": "Steel Pipe", "icon": "steel_pipe" },
+        { "name": "Steel Beam", "icon": "steel_beam" },
+        { "name": "Encased Industrial Beam", "icon": "encased_industrial_beam" },
+        { "name": "Modular Frame", "icon": "modular_frame" },
+        { "name": "Heavy Modular Frame", "icon": "heavy_modular_frame" },
+        { "name": "Fused Modular Frame", "icon": "fused_modular_frame" },
+        { "name": "Ficsite Trigon", "icon": "ficsite_trigon" },
+        { "name": "Fabric", "icon": "fabric" },
+        { "name": "Plastic", "icon": "plastic" },
+        { "name": "Rubber", "icon": "rubber" }
+      ]
+    },
+    {
+      "name": "Industrial Parts",
+      "items": [
+        { "name": "Rotor", "icon": "rotor" },
+        { "name": "Stator", "icon": "stator" },
+        { "name": "Battery", "icon": "battery" },
+        { "name": "Motor", "icon": "motor" },
+        { "name": "Heat Sink", "icon": "heat_sink" },
+        { "name": "Cooling System", "icon": "cooling_system" },
+        { "name": "Turbo Motor", "icon": "turbo_motor" }
+      ]
+    },
+    {
+      "name": "Electronics",
+      "items": [
+        { "name": "Wire", "icon": "wire" },
+        { "name": "Cable", "icon": "cable" },
+        { "name": "Quickwire", "icon": "quickwire" },
+        { "name": "Circuit Board", "icon": "circuit_board" },
+        { "name": "AI Limiter", "icon": "ai_limiter" },
+        { "name": "High-Speed Connector", "icon": "high_speed_connector" },
+        { "name": "Reanimated SAM", "icon": "reanimated_sam" },
+        { "name": "SAM Fluctuator", "icon": "sam_fluctuator" }
+      ]
+    },
+    {
+      "name": "Communications",
+      "items": [
+        { "name": "Computer", "icon": "computer" },
+        { "name": "Supercomputer", "icon": "supercomputer" },
+        { "name": "Radio Control Unit", "icon": "radio_control_unit" },
+        { "name": "Crystal Oscillator", "icon": "crystal_oscillator" },
+        { "name": "Superposition Oscillator", "icon": "superposition_oscillator" }
+      ]
+    },
+    {
+      "name": "Quantum Technology",
+      "items": [
+        { "name": "Diamonds", "icon": "diamonds" },
+        { "name": "Time Crystal", "icon": "time_crystal" },
+        { "name": "Dark Matter Crystal", "icon": "dark_matter_crystal" },
+        { "name": "Singularity Cell", "icon": "singularity_cell" },
+        { "name": "Neural-Quantum Processor", "icon": "neural_quantum_processor" },
+        { "name": "Alien Power Matrix", "icon": "alien_power_matrix" }
+      ]
+    },
+    {
+      "name": "Containers",
+      "items": [
+        { "name": "Empty Canister", "icon": "empty_canister" },
+        { "name": "Empty Fluid Tank", "icon": "empty_fluid_tank" },
+        { "name": "Pressure Conversion Cube", "icon": "pressure_conversion_cube" },
+        { "name": "Packaged Water", "icon": "packaged_water" },
+        { "name": "Packaged Alumina Solution", "icon": "packaged_alumina_solution" },
+        { "name": "Packaged Sulfuric Acid", "icon": "packaged_sulfuric_acid" },
+        { "name": "Packaged Nitric Acid", "icon": "packaged_nitric_acid" },
+        { "name": "Packaged Nitrogen Gas", "icon": "packaged_nitrogen_gas" }
+      ]
+    },
+    {
+      "name": "Fuels",
+      "items": [
+        { "name": "Leaves", "icon": "leaves" },
+        { "name": "Mycelia", "icon": "mycelia" },
+        { "name": "Flower Petals", "icon": "flower_petals" },
+        { "name": "Wood", "icon": "wood" },
+        { "name": "Biomass", "icon": "biomass" },
+        { "name": "Compacted Coal", "icon": "compacted_coal" },
+        { "name": "Packaged Oil", "icon": "packaged_oil" },
+        { "name": "Packaged Heavy Oil Residue", "icon": "packaged_heavy_oil_residue" },
+        { "name": "Solid Biofuel", "icon": "solid_biofuel" },
+        { "name": "Packaged Fuel", "icon": "packaged_fuel" },
+        { "name": "Packaged Liquid Biofuel", "icon": "packaged_liquid_biofuel" },
+        { "name": "Packaged Turbofuel", "icon": "packaged_turbofuel" },
+        { "name": "Packaged Rocket Fuel", "icon": "packaged_rocket_fuel" },
+        { "name": "Packaged Ionized Fuel", "icon": "packaged_ionized_fuel" },
+        { "name": "Uranium Fuel Rod", "icon": "uranium_fuel_rod" },
+        { "name": "Plutonium Fuel Rod", "icon": "plutonium_fuel_rod" }
+      ]
+    },
+    {
+      "name": "Consumed",
+      "items": [
+        { "name": "Black Powder", "icon": "black_powder" },
+        { "name": "Smokeless Powder", "icon": "smokeless_powder" },
+        { "name": "Gas Filter", "icon": "gas_filter" },
+        { "name": "Color Cartridge", "icon": "color_cartridge" },
+        { "name": "Beacon", "icon": "beacon" },
+        { "name": "Iodine-Infused Filter", "icon": "iodine_infused_filter" }
+      ]
+    },
+    {
+      "name": "Ammos",
+      "items": [
+        { "name": "Iron Rebar", "icon": "iron_rebar" },
+        { "name": "Stun Rebar", "icon": "stun_rebar" },
+        { "name": "Shatter Rebar", "icon": "shatter_rebar" },
+        { "name": "Explosive Rebar", "icon": "explosive_rebar" },
+        { "name": "Rifle Ammo", "icon": "rifle_ammo" },
+        { "name": "Homing Rifle Ammo", "icon": "homing_rifle_ammo" },
+        { "name": "Turbo Rifle Ammo", "icon": "turbo_rifle_ammo" },
+        { "name": "Nobelisk", "icon": "nobelisk" },
+        { "name": "Gas Nobelisk", "icon": "gas_nobelisk" },
+        { "name": "Pulse Nobelisk", "icon": "pulse_nobelisk" },
+        { "name": "Cluster Nobelisk", "icon": "cluster_nobelisk" },
+        { "name": "Nuke Nobelisk", "icon": "nuke_nobelisk" }
+      ]
+    },
+    {
+      "name": "Nuclear",
+      "items": [
+        { "name": "Electromagnetic Control Rod", "icon": "electromagnetic_control_rod" },
+        { "name": "Encased Uranium Cell", "icon": "encased_uranium_cell" },
+        { "name": "Non-Fissile Uranium", "icon": "non_fissile_uranium" },
+        { "name": "Plutonium Pellet", "icon": "plutonium_pellet" },
+        { "name": "Encased Plutonium Cell", "icon": "encased_plutonium_cell" },
+        { "name": "Ficsonium", "icon": "ficsonium" },
+        { "name": "Ficsonium Fuel Rod", "icon": "ficsonium_fuel_rod" }
+      ]
+    },
+    {
+      "name": "Waste",
+      "items": [
+        { "name": "Uranium Waste", "icon": "uranium_waste" },
+        { "name": "Plutonium Waste", "icon": "plutonium_waste" }
+      ]
+    },
+    {
+      "name": "Special",
+      "items": [
+        { "name": "Blue Power Slug", "icon": "blue_power_slug" },
+        { "name": "Yellow Power Slug", "icon": "yellow_power_slug" },
+        { "name": "Purple Power Slug", "icon": "purple_power_slug" },
+        { "name": "Power Shard", "icon": "power_shard" },
+        { "name": "FICSIT Coupon", "icon": "ficsit_coupon" },
+        { "name": "Smart Plating", "icon": "smart_plating" },
+        { "name": "Versatile Framework", "icon": "versatile_framework" },
+        { "name": "Automated Wiring", "icon": "automated_wiring" },
+        { "name": "Modular Engine", "icon": "modular_engine" },
+        { "name": "Adaptive Control Unit", "icon": "adaptive_control_unit" },
+        { "name": "Assembly Director System", "icon": "assembly_director_system" },
+        { "name": "Magnetic Field Generator", "icon": "magnetic_field_generator" },
+        { "name": "Thermal Propulsion Rocket", "icon": "thermal_propulsion_rocket" },
+        { "name": "Nuclear Pasta", "icon": "nuclear_pasta" },
+        { "name": "Biochemical Sculptor", "icon": "biochemical_sculptor" },
+        { "name": "Ballistic Warp Drive", "icon": "ballistic_warp_drive" },
+        { "name": "AI Expansion Server", "icon": "ai_expansion_server" }
+      ]
+    },
+    {
+      "name": "Tools & Equipment",
+      "items": [
+        { "name": "Gas Mask", "icon": "gas_mask" },
+        { "name": "Hazmat Suit", "icon": "hazmat_suit" },
+        { "name": "Parachute", "icon": "parachute" },
+        { "name": "Jetpack", "icon": "jetpack" },
+        { "name": "Hoverpack", "icon": "hoverpack" },
+        { "name": "Portable Miner", "icon": "portable_miner" },
+        { "name": "Zipline", "icon": "zipline" },
+        { "name": "Blade Runners", "icon": "blade_runners" },
+        { "name": "Chainsaw", "icon": "chainsaw" },
+        { "name": "Object Scanner", "icon": "object_scanner" },
+        { "name": "Medicinal Inhaler", "icon": "medicinal_inhaler" },
+        { "name": "Xeno-Zapper", "icon": "xeno_zapper" },
+        { "name": "Rebar Gun", "icon": "rebar_gun" },
+        { "name": "Rifle", "icon": "rifle" },
+        { "name": "Xeno-Basher", "icon": "xeno_basher" },
+        { "name": "Nobelisk Detonator", "icon": "nobelisk_detonator" }
+      ]
+    },
+    {
+      "name": "Collectibles",
+      "items": [
+        { "name": "Somersloop", "icon": "somersloop" },
+        { "name": "Mercer Sphere", "icon": "mercer_sphere" },
+        { "name": "Hard Drive", "icon": "hard_drive" }
+      ]
+    }
+  ]
+}
