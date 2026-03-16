@@ -20,3 +20,6 @@ CREATE TABLE public.market_listing (
 CREATE INDEX market_listing_tracker_game_idx ON market_listing (ap_tracker_id, game_name);
 CREATE INDEX market_listing_user_idx ON market_listing (ct_user_id);
 CREATE INDEX market_listing_matching_idx ON market_listing (ap_tracker_id, game_name, item_name, listing_type, status);
+
+CREATE CAST (text AS market_listing_type) WITH INOUT AS ASSIGNMENT;
+CREATE CAST (text AS market_listing_status) WITH INOUT AS ASSIGNMENT;
