@@ -105,6 +105,17 @@ export function getClaimingUserForGame(game) {
     return undefined;
 }
 
+export const marketListingType = keyed([
+    { id: 'offer', label: 'Offer', color: 'success', icon: 'box-arrow-up' },
+    { id: 'request', label: 'Request', color: 'warning', icon: 'box-arrow-in-down' },
+]);
+
+export const marketListingStatus = keyed([
+    { id: 'active', label: 'Active', color: 'success' },
+    { id: 'fulfilled', label: 'Fulfilled', color: 'info' },
+    { id: 'cancelled', label: 'Cancelled', color: 'secondary' },
+]);
+
 export const sortModes = keyed([
     { id: 'normal', label: 'Normal' },
     { id: 'selftop', label: 'Mine first' },

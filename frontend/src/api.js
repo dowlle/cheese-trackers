@@ -143,3 +143,23 @@ export async function updateUserServerSettings(data) {
         data,
     });
 }
+
+export async function getMarketListings(tracker_id) {
+    return api_http.get(`tracker/${tracker_id}/market`);
+}
+
+export async function createMarketListing(tracker_id, data) {
+    return api_http.post(`tracker/${tracker_id}/market`, data);
+}
+
+export async function updateMarketListing(tracker_id, listing_id, data) {
+    return api_http.put(`tracker/${tracker_id}/market/${listing_id}`, data);
+}
+
+export async function deleteMarketListing(tracker_id, listing_id) {
+    return api_http.delete(`tracker/${tracker_id}/market/${listing_id}`);
+}
+
+export async function getMarketMatches(tracker_id) {
+    return api_http.get(`tracker/${tracker_id}/market/matches`);
+}

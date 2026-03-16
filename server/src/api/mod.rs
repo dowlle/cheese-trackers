@@ -21,6 +21,7 @@ use crate::{
 
 pub mod auth;
 pub mod dashboard;
+pub mod market;
 pub mod tracker;
 pub mod user;
 
@@ -53,6 +54,26 @@ where
         .route(
             "/tracker/{tracker_id}/dashboard_override",
             put(tracker::put_tracker_dashboard_override),
+        )
+        .route(
+            "/tracker/{tracker_id}/market",
+            get(market::get_market_listings),
+        )
+        .route(
+            "/tracker/{tracker_id}/market",
+            post(market::create_market_listing),
+        )
+        .route(
+            "/tracker/{tracker_id}/market/{listing_id}",
+            put(market::update_market_listing),
+        )
+        .route(
+            "/tracker/{tracker_id}/market/{listing_id}",
+            delete(market::delete_market_listing),
+        )
+        .route(
+            "/tracker/{tracker_id}/market/matches",
+            get(market::get_market_matches),
         )
         .route("/user/self", get(user::get_self))
         .route("/user/self/api_key", get(user::get_api_key))

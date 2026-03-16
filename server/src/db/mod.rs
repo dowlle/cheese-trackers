@@ -305,6 +305,40 @@ pub trait DataAccess {
     where
         's: 'f,
         'v: 'f;
+
+    /// Gets all [`MarketListing`]s for a tracker.
+    fn get_market_listings_by_tracker_id(
+        &mut self,
+        tracker_id: i32,
+    ) -> impl Stream<Item = sqlx::Result<MarketListing>> + Send;
+
+    /// Gets a single [`MarketListing`] by its ID.
+    fn get_market_listing(
+        &mut self,
+        listing_id: i32,
+    ) -> impl Future<Output = sqlx::Result<Option<MarketListing>>> + Send;
+
+    /// Creates one or more new [`MarketListing`]s in the database.
+    fn create_market_listings<'s, 'v, 'f>(
+        &'s mut self,
+        listings: impl IntoIterator<Item = MarketListingInsertion> + Send + 'v,
+    ) -> impl Stream<Item = sqlx::Result<MarketListing>> + Send + 'f
+    where
+        's: 'f,
+        'v: 'f;
+
+    /// Updates an existing [`MarketListing`].
+    fn update_market_listing(
+        &mut self,
+        listing: MarketListing,
+        columns: &[MarketListingIden],
+    ) -> impl Future<Output = sqlx::Result<Option<MarketListing>>> + Send;
+
+    /// Deletes an existing [`MarketListing`] by its ID.
+    fn delete_market_listing_by_id(
+        &mut self,
+        id: i32,
+    ) -> impl Future<Output = sqlx::Result<Option<MarketListing>>> + Send;
 }
 
 pub fn create_audit_for<V>(

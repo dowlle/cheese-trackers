@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ct
+      POSTGRES_PASSWORD: ct_dev_password
+      POSTGRES_DB: cheese_trackers
+    ports:
+      - "5434:5432"
+    volumes:
+      - ct_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ct -d cheese_trackers"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: Containerfile
+      args:
+        GIT_COMMIT: dev
+    ports:
+      - "3080:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./frontend/dist:/app/dist:ro
+    environment:
+      CT_GIT_COMMIT: dev
+
+volumes:
+  ct_pgdata:

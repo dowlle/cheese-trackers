@@ -512,6 +512,49 @@ impl<T: AsMut<<Postgres as sqlx::Database>::Connection> + Send> DataAccess for P
     {
         pg_insert::<_, ViaModelWithPrimaryKey<Audit>>(self.0.as_mut(), audits)
     }
+
+    fn get_market_listings_by_tracker_id(
+        &mut self,
+        tracker_id: i32,
+    ) -> impl Stream<Item = sqlx::Result<MarketListing>> + Send {
+        pg_select_many(
+            self.0.as_mut(),
+            Expr::col(MarketListingIden::ApTrackerId).eq(tracker_id),
+        )
+    }
+
+    fn get_market_listing(
+        &mut self,
+        listing_id: i32,
+    ) -> impl Future<Output = sqlx::Result<Option<MarketListing>>> + Send {
+        pg_select_one(self.0.as_mut(), Expr::col(MarketListingIden::Id).eq(listing_id))
+    }
+
+    fn create_market_listings<'s, 'v, 'f>(
+        &'s mut self,
+        listings: impl IntoIterator<Item = MarketListingInsertion> + Send + 'v,
+    ) -> impl Stream<Item = sqlx::Result<MarketListing>> + Send + 'f
+    where
+        's: 'f,
+        'v: 'f,
+    {
+        pg_insert::<_, ViaModelWithPrimaryKey<MarketListing>>(self.0.as_mut(), listings)
+    }
+
+    fn update_market_listing(
+        &mut self,
+        listing: MarketListing,
+        columns: &[MarketListingIden],
+    ) -> impl Future<Output = sqlx::Result<Option<MarketListing>>> + Send {
+        pg_update(self.0.as_mut(), listing, columns)
+    }
+
+    fn delete_market_listing_by_id(
+        &mut self,
+        id: i32,
+    ) -> impl Future<Output = sqlx::Result<Option<MarketListing>>> + Send {
+        pg_delete(self.0.as_mut(), id)
+    }
 }
 
 impl<'a> Transaction<'a> for PgDataAccess<sqlx::Transaction<'a, Postgres>> {

@@ -25,6 +25,7 @@ import CancelableEdit from '@/components/CancelableEdit.vue';
 import RoomPortButton from '@/components/RoomPortButton.vue';
 import OverwriteClaimButton from '@/components/OverwriteClaimButton.vue';
 import TrackerDescription from '@/components/TrackerDescription.vue';
+import MarketPanel from '@/components/MarketPanel.vue';
 
 import TrackerTable from '@/components/TrackerTable.vue';
 import TrackerTableHeader from '@/components/TrackerTableHeader.vue';
@@ -52,6 +53,8 @@ const props = defineProps(['aptrackerid']);
 const loading = ref(false);
 const error = ref(undefined);
 const showTools = ref(false);
+const showMarket = ref(false);
+const marketMatchCount = ref(0);
 const trackerData = ref(undefined);
 const hintsByFinder = ref(undefined);
 const hintsByReceiver = ref(undefined);
@@ -835,6 +838,11 @@ loadTracker();
             You will be unable to claim slots until you either sign in with Discord or set your Discord username in the
             <router-link to="/settings">settings</router-link>.
         </div>
+        <div v-if="marketMatchCount > 0" class="alert alert-success alert-dismissible text-center">
+            <i class="bi-check-circle"/> You have <strong>{{ marketMatchCount }}</strong> market request(s) with matching offers!
+            <button class="btn btn-sm btn-success ms-2" @click="showMarket = true; showTools = false">View Market</button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
         <div :class="(showTools || (trackerData?.description || '').length) ? 'mb-3' : 'mb-4'">
             <h2 class="text-center">
                 <span :class="{ 'text-muted': !trackerData.title, 'fst-italic': !trackerData.title }">{{
@@ -849,6 +857,14 @@ loadTracker();
                     @click="showTools = !showTools"
                 >
                     <i :class="showTools ? 'bi-gear-fill' : 'bi-gear'"/>
+                </button> <button
+                    class="btn btn-sm btn-outline-warning"
+                    :class="{ active: showMarket }"
+                    @click="showMarket = !showMarket"
+                >
+                    <i :class="showMarket ? 'bi-shop-window' : 'bi-shop'"/>
+                    Market
+                    <span v-if="marketMatchCount > 0" class="badge bg-danger">{{ marketMatchCount }}</span>
                 </button> <DropdownSelector
                     v-if="currentUser?.id !== undefined"
                     :options="dashboardOverrideVisibilities"
@@ -895,6 +911,14 @@ loadTracker();
             class="container bg-dark-subtle pt-3 pb-3 mb-4 rounded"
             :source="trackerData.description"
         />
+        <div v-if="showMarket && !showTools" class="mb-4">
+            <MarketPanel
+                :aptrackerid="props.aptrackerid"
+                :trackerData="trackerData"
+                :gameById="gameById"
+                @matchCount="(c) => marketMatchCount = c"
+            />
+        </div>
         <form class="container bg-dark-subtle pt-3 mb-4 rounded" v-if="showTools">
             <div class="row">
                 <div class="col-12 col-xxl-6 mb-3">

@@ -234,6 +234,21 @@ impl From<crate::auth::token::AuthenticationSource> for AuthenticationSource {
     }
 }
 
+db_enum! {
+    pub enum MarketListingType as "market_listing_type" {
+        Offer,
+        Request,
+    }
+}
+
+db_enum! {
+    pub enum MarketListingStatus as "market_listing_status" {
+        Active,
+        Fulfilled,
+        Cancelled,
+    }
+}
+
 /// Model for database table `ap_tracker`.
 #[sea_query::enum_def]
 #[derive(Debug, Clone, Model, ModelWithAutoPrimaryKey, FromRow, IntoFieldwiseDiff)]
@@ -394,6 +409,24 @@ pub struct ApHint {
     pub found: bool,
     pub classification: HintClassification,
     pub item_link_name: String,
+}
+
+/// Model for database table `market_listing`.
+#[sea_query::enum_def]
+#[derive(Debug, Clone, Model, ModelWithAutoPrimaryKey, FromRow, Serialize)]
+pub struct MarketListing {
+    #[model(primary_key)]
+    pub id: i32,
+    pub ap_tracker_id: i32,
+    pub ct_user_id: i32,
+    pub ap_game_id: i32,
+    pub game_name: String,
+    pub item_name: String,
+    pub listing_type: MarketListingType,
+    pub quantity: i32,
+    pub status: MarketListingStatus,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 /// Model for database table `ct_user`.
